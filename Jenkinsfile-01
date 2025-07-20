@@ -19,11 +19,6 @@ pipeline {
                 bat 'mvn install'
             }
         }
-         stage('Deploy') {
-            steps {
-                echo 'Deploying...'
-                bat 'mvn tomcat7:deploy'
-            }
-        }
+      
     }
 }
