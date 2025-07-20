@@ -1,7 +1,7 @@
 pipeline {
     agent any
    
-       try{
+       stages{
     stage 'checkout project'
     checkout scm
 
