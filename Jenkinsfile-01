@@ -1,17 +1,30 @@
-// Building WAR file
 pipeline {
-    agent none
+    agent any
+    tools {
+        maven "MAVEN"
+        jdk "JDK"
+    }
     stages {
-        stage('Code Build') {
-            agent {
-                docker {
-                    label 'docker-slave01'
-                    image 'maven:3.8.3-adoptopenjdk-11'
-                }
-            }
-            steps {
-                sh "mvn clean package"
+        stage('Initialize'){
+            steps{
+                echo "PATH = ${M2_HOME}/bin:${PATH}"
+                echo "M2_HOME = E:\apache-maven-3.9.10-bin\apache-maven-3.9.10"
             }
         }
-    }
+        stage('Build') {
+            steps {
+                dir("C:\ProgramData\Jenkins\.jenkins\workspace/pipeline/my-app") {
+                sh 'mvn -B -DskipTests clean package'
+                }
+            }
+        }
+     }
+    post {
+       always {
+          junit(
+        allowEmptyResults: true,
+        testResults: '*/test-reports/.xml'
+      )
+      }
+   } 
 }
