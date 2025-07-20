@@ -21,7 +21,5 @@ pipeline {
     stage 'Artifact'
     step([$class: 'ArtifactArchiver', artifacts: '**/target/*.jar', fingerprint: true])
 
-  }catch(e){
-    throw e;
   }
 }
