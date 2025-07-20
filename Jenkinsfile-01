@@ -19,5 +19,11 @@ pipeline {
                 bat 'mvn install'
             }
         }
+         stage('Deploy') {
+            steps {
+                echo 'Deploying...'
+                bat 'mvn deploy'
+            }
+        }
     }
 }
