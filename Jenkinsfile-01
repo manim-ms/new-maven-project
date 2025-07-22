@@ -13,20 +13,6 @@ pipeline {
                 bat 'mvn package'
             }
         }
-        stage('SonarQube Code Analysis') {
-            steps {
-                dir("${WORKSPACE}"){
-                // Run SonarQube analysis for Python
-                script {
-                    def scannerHome = tool name: 'scanner-name', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
-                    withSonarQubeEnv('sonar') {
-                        bat "echo $pwd"
-                        bat "${scannerHome}/bin/sonar-scanner"
-                    }
-                }
-            }
-            }
-       }
         stage("SonarQube Quality Gate Check") {
             steps {
                 script {
