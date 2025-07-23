@@ -17,7 +17,7 @@ pipeline {
       steps {
         // Wrap the SonarQube analysis command with withSonarQubeEnv
         // to configure environment variables for SonarQube integration.
-        withSonarQubeEnv('SonarQube') { // Replace 'SonarQube' with your SonarQube server name in Jenkins
+        withSonarQubeEnv('Sonar') { // Replace 'SonarQube' with your SonarQube server name in Jenkins
           // Execute the SonarQube scanner. Adjust the parameters based on your project.
           bat """
             sonar-scanner \
