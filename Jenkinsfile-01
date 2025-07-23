@@ -10,31 +10,33 @@ pipeline {
         stage('Package') {
             steps {
                 echo 'Packaging...'
-                bat 'mvn package'
+                bat 'mvn package install'
             }
         }
-        stage("SonarQube Quality Gate Check") {
-            steps {
-                script {
-                def qualityGate = waitForQualityGate()
-                    
-                    if (qualityGate.status != 'OK') {
-                        echo "${qualityGate.status}"
-                        error "Quality Gate failed: ${qualityGateStatus}"
-                    }
-                    else {
-                        echo "${qualityGate.status}"
-                        echo "SonarQube Quality Gates Passed"
-                    }
-                }
-            }
+        stage('SonarQube Analysis') {
+      steps {
+        // Wrap the SonarQube analysis command with withSonarQubeEnv
+        // to configure environment variables for SonarQube integration.
+        withSonarQubeEnv('SonarQube') { // Replace 'SonarQube' with your SonarQube server name in Jenkins
+          // Execute the SonarQube scanner. Adjust the parameters based on your project.
+          bat """
+            sonar-scanner \
+              -Dsonar.projectKey=your_project_key \
+              -Dsonar.projectName=Your Project Name \
+              -Dsonar.sources=. \
+              -Dsonar.host.url=http://localhost:9000 \
+              -Dsonar.login=squ_8887c759cb99418ced3bf444fe016d88cac70d99
+          """
         }
-        stage('Build') {
-            steps {
-                echo 'Building...'
-                bat 'mvn install'
-            }
+      }
+    }
+
+    stage('Quality Gate') {
+      steps {
+        timeout(time: 1, unit: 'HOURS') {
+          waitForQualityGate abortPipeline: true // Abort pipeline if quality gate fails
         }
-      
+      }
+        }      
     }
 }
