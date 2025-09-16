@@ -1,42 +1,27 @@
-pipeline {
-    agent any
-    stages {
-        stage('Clean') {
-            steps {
-                echo 'Cleaning...'
-                bat 'mvn clean'
-            }
-        }
-        stage('Package') {
-            steps {
-                echo 'Packaging...'
-                bat 'mvn package install'
-            }
-        }
-        stage('SonarQube Analysis') {
-      steps {
-        // Wrap the SonarQube analysis command with withSonarQubeEnv
-        // to configure environment variables for SonarQube integration.
-        withSonarQubeEnv('Sonar') { // Replace 'SonarQube' with your SonarQube server name in Jenkins
-          // Execute the SonarQube scanner. Adjust the parameters based on your project.
-          bat """
-            sonar-scanner \
-              -Dsonar.projectKey=your_project_key \
-              -Dsonar.projectName=Your Project Name \
-              -Dsonar.sources=. \
-              -Dsonar.host.url=http://localhost:9000 \
-              -Dsonar.login=squ_8887c759cb99418ced3bf444fe016d88cac70d99
-          """
-        }
+ pipeline {
+   agent any
+     tools {
+      jdk 'Java17'
+      maven 'Maven3'
       }
+      stages {
+        stage('Versions') {
+          steps {
+            sh 'java --version'
+            sh 'mvn --version'
+     }
+}
+    stage('Checkout') {
+         steps {
+            git branch: 'main',
+            url: 'https://github.com/balakrishnasetlem/projectMaven.git',
+            credentialsId: 'github-password'
     }
-
-    stage('Quality Gate') {
-      steps {
-        timeout(time: 1, unit: 'HOURS') {
-          waitForQualityGate abortPipeline: true // Abort pipeline if quality gate fails
-        }
-      }
-        }      
-    }
+}
+    stage('Install and deploy') {
+         steps {
+           sh 'mvn install tomcat7:deploy'
+   }
+}
+}
 }
