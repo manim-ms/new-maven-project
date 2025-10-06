@@ -1,23 +1,39 @@
  pipeline {
-   agent any
-      stages {
-        stage('Versions') {
-          steps {
-            sh 'java --version'
-            sh 'mvn --version'
-     }
-}
-    stage('Checkout') {
-         steps {
-            git branch: 'main',
-            url: 'https://github.com/balakrishnasetlem/projectMaven.git',
-            credentialsId: 'github-password'
+    agent any
+
+    environment {
+        MAVEN_HOME = '/opt/maven' // Path on Jenkins agent
+        PATH = "${MAVEN_HOME}/bin:${env.PATH}"
     }
-}
-    stage('Install and deploy') {
-         steps {
-           sh 'mvn install tomcat7:deploy'
-   }
-}
-}
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/yourusername/your-maven-project.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Deploy to Tomcat') {
+            steps {
+                deploy adapters: [tomcat9(credentialsId: 'tomcat-credentials', path: '', url: 'http://<host-ip>:8081/')], 
+                       contextPath: '/myapp', 
+                       war: '**/target/*.war'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Deployment successful!'
+        }
+        failure {
+            echo 'Build or Deployment failed.'
+        }
+    }
 }
