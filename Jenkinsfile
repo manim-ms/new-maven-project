@@ -1,37 +1,65 @@
 pipeline {
     agent any
-    environment{
-        IMAGE_NAME = "demoimage"
-        DOCKERHUB_USERNAME = "kunchalavikram"
+
+    environment {
+        // Tomcat container name and path inside container
+        TOMCAT_CONTAINER = 'tomcat9'
+        TOMCAT_WEBAPPS = '/usr/local/tomcat/webapps'
+        // Application name (change to match your project)
+        APP_NAME = 'myapp'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/kunchalavikram1427/maven-employee-web-application.git'
+                echo 'Cloning repository...'
+                git branch: 'main', url: 'https://github.com/your-username/your-repo.git'
             }
         }
-        stage('build'){
-            steps{
-                withEnv(['PATH+EXTRA=/opt/apache-maven-3.9.5/bin']) {
-                    sh 'mvn package'
-                }
-                sh "ls -al target/"
+
+        stage('Build with Maven') {
+            steps {
+                echo 'Building WAR file...'
+                sh 'mvn clean package'
             }
         }
-        stage('dockerize'){
-            steps{
-                withCredentials([string(credentialsId: 'docker_token', variable: 'TOKEN')]) {
-                    sh 'docker login -u kunchalavikram -p ${TOKEN}'
-                }
-                sh 'docker build -t $IMAGE_NAME:$BUILD_NUMBER .'
-                sh 'docker tag $IMAGE_NAME:$BUILD_NUMBER $DOCKERHUB_USERNAME/$IMAGE_NAME:$BUILD_NUMBER'
+
+        stage('Deploy to Tomcat (Docker)') {
+            steps {
+                echo 'Deploying WAR file to Tomcat container...'
+                sh '''
+                    WAR_FILE=target/${APP_NAME}.war
+                    if [ ! -f "$WAR_FILE" ]; then
+                        echo "WAR file not found!"
+                        exit 1
+                    fi
+
+                    echo "Copying WAR to Tomcat container..."
+                    docker cp $WAR_FILE ${TOMCAT_CONTAINER}:${TOMCAT_WEBAPPS}/
+
+                    echo "Restarting Tomcat container..."
+                    docker restart ${TOMCAT_CONTAINER}
+                '''
             }
         }
-        stage('push'){
-            steps{
-                sh 'docker push $DOCKERHUB_USERNAME/$IMAGE_NAME:$BUILD_NUMBER'
+
+        stage('Verify Deployment') {
+            steps {
+                echo 'Checking Tomcat deployment...'
+                sh '''
+                    sleep 10
+                    curl -I http://localhost:8085/${APP_NAME}/ || true
+                '''
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'Deployment successful!'
+        }
+        failure {
+            echo 'Deployment failed. Check Jenkins logs.'
         }
     }
 }
